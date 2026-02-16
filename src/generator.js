@@ -1,5 +1,7 @@
 /* -------------------------------------------------------
    generator.js – random HVAC configuration generator
+   Produces deep hierarchical piping trees matching
+   Mitsubishi e-Solution style diagrams
 ------------------------------------------------------- */
 import {
     UNIT_TYPES, INDOOR_MODELS, OUTDOOR_MODELS, REMOTE_CONTROLLERS,
@@ -16,11 +18,6 @@ function nextId() { return ++_id; }
 
 /**
  * Generate a full HVAC system configuration.
- * @param {object} opts
- * @param {number} opts.numUnits       – number of indoor units (1-16)
- * @param {number} opts.systemCapacity – approx total cooling kW
- * @param {string} opts.buildingType   – office | workshop | residential | commercial
- * @param {number} opts.numOutputs     – number of wiring outputs (for wiring diagram)
  */
 export function generateSystem(opts = {}) {
     _id = 0;
@@ -36,7 +33,6 @@ export function generateSystem(opts = {}) {
     // Indoor units
     const units = [];
     const rooms = BUILDING_PREFIXES[buildingType] || BUILDING_PREFIXES.office;
-    const roomPrefix = buildingType === 'workshop' ? '' : null;
 
     for (let i = 0; i < numUnits; i++) {
         const unitType = pick(UNIT_TYPES);
@@ -47,10 +43,11 @@ export function generateSystem(opts = {}) {
         const cool = round1(cap.cool * Math.max(0.8, Math.min(1.5, scaleFactor)));
         const heat = round1(cap.heat * Math.max(0.8, Math.min(1.5, scaleFactor)));
 
-        const roomName = roomPrefix === null
-            ? `${pick(rooms)} ${i + 1}`
-            : rooms[i % rooms.length];
+        const roomName = buildingType === 'workshop'
+            ? rooms[i % rooms.length]
+            : `${pick(rooms)} ${i + 1}`;
         const locationCode = `S/L${String(i).padStart(2, '0')}`;
+        const typePrefix = model.substring(0, 3).toUpperCase();
 
         units.push({
             id: nextId(),
@@ -59,14 +56,14 @@ export function generateSystem(opts = {}) {
             model,
             cooling_kw: cool,
             heating_kw: heat,
-            room: roomName,
+            room: `${roomName} ${typePrefix}`,
             location: locationCode,
             remote: pick(REMOTE_CONTROLLERS),
         });
     }
 
-    // Piping (tree structure)
-    const piping = buildPipingTree(units);
+    // Build deep piping tree
+    const pipingTree = buildDeepPipingTree(units);
 
     // Electrical info
     const phase = numUnits > 6 ? PHASES[1] : pick(PHASES);
@@ -86,7 +83,7 @@ export function generateSystem(opts = {}) {
         })),
     };
 
-    // Wiring outputs (for wiring diagram)
+    // Wiring outputs
     const wiringOutputs = [];
     const unitsPerOutput = Math.ceil(numUnits / numOutputs);
     for (let o = 0; o < numOutputs; o++) {
@@ -111,18 +108,20 @@ export function generateSystem(opts = {}) {
     const projectName = `PROJECT ${buildingType.toUpperCase()} ${new Date().getFullYear()}`;
     const totalCool = round1(units.reduce((s, u) => s + u.cooling_kw, 0));
     const totalHeat = round1(units.reduce((s, u) => s + u.heating_kw, 0));
-    const totalPipe = round1(units.length * rand(3, 8));
+    const totalPipe = round1(units.length * rand(4, 10));
 
     return {
         project: {
             name: projectName,
             system: 'UE1',
-            designConditions: '27.0 C B S, 19.0 C B H / 35.0 C B S',
+            designConditions: '27.0°C B S, 19.0°C B H / 35.0°C B S',
             totalPipeLength: totalPipe,
-            maxPipeLength: round1(totalPipe * 1.8),
+            maxPipeLength: round1(totalPipe * 2),
             connectedUnits: numUnits,
             totalCooling: totalCool,
             totalHeating: totalHeat,
+            requiredCooling: 0,
+            requiredHeating: 0,
             connectedCapacity: `${randInt(150, 200)} / 210`,
             diversityFactor: '0%',
             additionalRefrigerant: round1(rand(0.5, 3)),
@@ -134,72 +133,75 @@ export function generateSystem(opts = {}) {
             heating_kw: outdoorCap.heat,
         },
         indoor: units,
-        piping,
+        piping: pipingTree,
         electrical,
         wiringOutputs,
     };
 }
 
-/* Build a realistic piping tree from outdoor to indoor units */
-function buildPipingTree(units) {
-    const segments = [];
+/**
+ * Build a deep hierarchical piping tree.
+ * Returns a tree object (not flat array) where each node can have children.
+ * Structure: { joint, gasSize, liquidSize, distance, children: [...] | unit: {...} }
+ */
+function buildDeepPipingTree(units) {
+    const n = units.length;
+    if (n === 0) return { joint: null, gasSize: '', liquidSize: '', distance: 0, children: [] };
+
+    // Build binary-ish tree recursively
+    const root = buildBranch(units, 0, true);
+    return root;
+}
+
+function buildBranch(units, depth, isMainTrunk) {
     const n = units.length;
 
-    // Main trunk
-    const trunkLiquid = pick(PIPE_SIZES.liquid);
-    const trunkGas = pick(PIPE_SIZES.gas);
-    segments.push({
-        from: 'outdoor',
-        to: 'joint_main',
-        joint: pick(JOINT_MODELS),
-        liquidSize: trunkLiquid,
-        gasSize: trunkGas,
-        distance: round1(rand(5, 15)),
-    });
+    // Pipe sizing gets smaller as we go deeper
+    const gasSizes = ['5/8"', '1/2"', '3/8"'];
+    const liquidSizes = ['3/8"', '1/4"', '1/4"'];
+    const gasSize = gasSizes[Math.min(depth, gasSizes.length - 1)];
+    const liquidSize = liquidSizes[Math.min(depth, liquidSizes.length - 1)];
+    const distance = round1(isMainTrunk ? rand(8, 15) : rand(2, 6));
 
-    if (n <= 3) {
-        // Direct branches
-        units.forEach((u, i) => {
-            segments.push({
-                from: 'joint_main',
-                to: `unit_${u.id}`,
-                joint: i < n - 1 ? pick(JOINT_MODELS) : null,
-                liquidSize: pick(PIPE_SIZES.liquid),
-                gasSize: pick(PIPE_SIZES.gas),
-                distance: round1(rand(2, 8)),
-            });
-        });
-    } else {
-        // Group into sub-branches
-        const groups = [];
-        let idx = 0;
-        while (idx < n) {
-            const size = Math.min(randInt(2, 4), n - idx);
-            groups.push(units.slice(idx, idx + size));
-            idx += size;
-        }
-        groups.forEach((grp, gi) => {
-            const branchJoint = `joint_b${gi}`;
-            segments.push({
-                from: 'joint_main',
-                to: branchJoint,
-                joint: pick(JOINT_MODELS),
-                liquidSize: pick(PIPE_SIZES.liquid),
-                gasSize: pick(PIPE_SIZES.gas),
-                distance: round1(rand(3, 8)),
-            });
-            grp.forEach((u, ui) => {
-                segments.push({
-                    from: branchJoint,
-                    to: `unit_${u.id}`,
-                    joint: ui < grp.length - 1 ? pick(JOINT_MODELS) : null,
-                    liquidSize: pick(PIPE_SIZES.liquid),
-                    gasSize: pick(PIPE_SIZES.gas),
-                    distance: round1(rand(1, 6)),
-                });
-            });
-        });
+    if (n === 1) {
+        // Leaf node — single unit
+        return {
+            joint: null,
+            gasSize: gasSizes[Math.min(depth, gasSizes.length - 1)],
+            liquidSize: liquidSizes[Math.min(depth, liquidSizes.length - 1)],
+            distance: round1(rand(1.5, 5)),
+            unit: units[0],
+        };
     }
 
-    return segments;
+    if (n === 2) {
+        // Two units — joint splits into two leaves
+        return {
+            joint: pick(JOINT_MODELS),
+            gasSize,
+            liquidSize,
+            distance,
+            children: [
+                buildBranch([units[0]], depth + 1, false),
+                buildBranch([units[1]], depth + 1, false),
+            ],
+        };
+    }
+
+    // More than 2 units — split into a "first branch" and "continue" branch
+    // The reference diagram shows: joint → first group goes right, rest continues down
+    const splitIdx = Math.max(1, Math.min(n - 1, randInt(1, Math.ceil(n / 2))));
+    const firstBranch = units.slice(0, splitIdx);
+    const restBranch = units.slice(splitIdx);
+
+    return {
+        joint: pick(JOINT_MODELS),
+        gasSize,
+        liquidSize,
+        distance,
+        children: [
+            buildBranch(firstBranch, depth + 1, false),
+            buildBranch(restBranch, depth + 1, false),
+        ],
+    };
 }
