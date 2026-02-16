@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HVAC Diagram Generator</title>
+  <meta name="description"
+    content="Generate professional HVAC installation diagrams — refrigerant piping, electrical wiring, and wiring output layouts." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="src/style.css" />
+</head>
+
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="6" fill="url(#lg)" />
+            <path d="M7 14h14M14 7v14M9 9l10 10M19 9L9 19" stroke="#fff" stroke-width="1.5" stroke-linecap="round"
+              opacity=".7" />
+            <circle cx="14" cy="14" r="4" stroke="#fff" stroke-width="1.5" />
+            <defs>
+              <linearGradient id="lg" x1="0" y1="0" x2="28" y2="28">
+                <stop stop-color="#6366f1" />
+                <stop offset="1" stop-color="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1>HVAC Diagrams</h1>
+      </div>
+
+      <div class="sidebar-content">
+        <!-- Diagram Type -->
+        <section class="control-group">
+          <label class="control-label">Diagram Type</label>
+          <div class="diagram-type-buttons" id="diagramTypeButtons">
+            <button class="type-btn active" data-type="refrigerant">
+              <span class="type-icon">❄️</span>
+              <span>Refrigerant Piping</span>
+            </button>
+            <button class="type-btn" data-type="electrical">
+              <span class="type-icon">⚡</span>
+              <span>Electrical Wiring</span>
+            </button>
+            <button class="type-btn" data-type="wiring">
+              <span class="type-icon">🔌</span>
+              <span>Wiring Output</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Parameters -->
+        <section class="control-group">
+          <label class="control-label">Parameters</label>
+          <div class="param-row">
+            <label for="numUnits">Indoor Units</label>
+            <div class="slider-container">
+              <input type="range" id="numUnits" min="1" max="16" value="6" />
+              <span class="slider-value" id="numUnitsVal">6</span>
+            </div>
+          </div>
+          <div class="param-row">
+            <label for="systemCapacity">System Capacity (kW)</label>
+            <div class="slider-container">
+              <input type="range" id="systemCapacity" min="5" max="56" value="14" step="1" />
+              <span class="slider-value" id="systemCapacityVal">14</span>
+            </div>
+          </div>
+          <div class="param-row">
+            <label for="buildingType">Building Type</label>
+            <select id="buildingType">
+              <option value="office">Office</option>
+              <option value="workshop">Workshop</option>
+              <option value="residential">Residential</option>
+              <option value="commercial">Commercial</option>
+            </select>
+          </div>
+          <div class="param-row" id="wiringOutputsRow">
+            <label for="numOutputs">Wiring Outputs</label>
+            <div class="slider-container">
+              <input type="range" id="numOutputs" min="1" max="4" value="1" />
+              <span class="slider-value" id="numOutputsVal">1</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Actions -->
+        <section class="control-group">
+          <button class="btn btn-primary" id="btnGenerate">
+            <span>🎲</span> Generate Random
+          </button>
+          <button class="btn btn-secondary" id="btnRenderJson">
+            <span>📄</span> Render from JSON
+          </button>
+        </section>
+
+        <!-- JSON Editor -->
+        <section class="control-group json-section">
+          <div class="json-header">
+            <label class="control-label">JSON Configuration</label>
+            <div class="json-actions">
+              <button class="btn-icon" id="btnCopyJson" title="Copy JSON">📋</button>
+              <button class="btn-icon" id="btnImportJson" title="Import JSON">📥</button>
+            </div>
+          </div>
+          <textarea id="jsonEditor" spellcheck="false"
+            placeholder="Generate a diagram or paste JSON here..."></textarea>
+          <input type="file" id="jsonFileInput" accept=".json" hidden />
+        </section>
+
+        <!-- Export -->
+        <section class="control-group">
+          <label class="control-label">Export</label>
+          <div class="export-buttons">
+            <button class="btn btn-outline" id="btnExportSvg">
+              <span>📐</span> Export SVG
+            </button>
+            <button class="btn btn-outline" id="btnExportPng">
+              <span>🖼️</span> Export PNG
+            </button>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <!-- Main viewport -->
+    <main id="viewport">
+      <div id="diagramContainer">
+        <div id="placeholder">
+          <div class="placeholder-icon">📊</div>
+          <h2>HVAC Diagram Generator</h2>
+          <p>Configure parameters and click <strong>Generate Random</strong> or paste JSON and click <strong>Render from
+              JSON</strong></p>
+        </div>
+      </div>
+      <div id="zoomControls">
+        <button class="zoom-btn" id="btnZoomIn" title="Zoom In">+</button>
+        <span id="zoomLevel">100%</span>
+        <button class="zoom-btn" id="btnZoomOut" title="Zoom Out">−</button>
+        <button class="zoom-btn" id="btnZoomFit" title="Fit to View">⊡</button>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+
+</html>
