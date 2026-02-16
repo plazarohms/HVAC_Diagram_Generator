@@ -119,39 +119,38 @@
           <div class="grid grid-cols-2 gap-1.5" id="presetButtons">
             <button
               class="px-2.5 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 dark:hover:border-gray-600 hover:border-gray-300 transition-colors text-left"
-              data-preset="small-office">🏢 Small Office</button>
+              data-preset="small-office">Small Office</button>
             <button
               class="px-2.5 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 dark:hover:border-gray-600 hover:border-gray-300 transition-colors text-left"
-              data-preset="large-commercial">🏬 Large Commercial</button>
+              data-preset="large-commercial">Large Commercial</button>
             <button
               class="px-2.5 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 dark:hover:border-gray-600 hover:border-gray-300 transition-colors text-left"
-              data-preset="residential">🏠 Residential</button>
+              data-preset="residential">Residential</button>
             <button
               class="px-2.5 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 dark:hover:border-gray-600 hover:border-gray-300 transition-colors text-left"
-              data-preset="workshop">🏭 Workshop</button>
+              data-preset="workshop">Workshop</button>
           </div>
         </section>
 
-        <!-- Diagram Type -->
+        <!-- Manufacturer Style -->
         <section>
           <label
-            class="block text-[10px] font-semibold uppercase tracking-wider dark:text-gray-500 text-gray-400 mb-1.5">Diagram
-            Type</label>
+            class="block text-[10px] font-semibold uppercase tracking-wider dark:text-gray-500 text-gray-400 mb-1.5">Manufacturer
+            Style</label>
           <div class="flex flex-col gap-1" id="diagramTypeButtons">
-            <button
-              class="type-btn flex items-center gap-2 px-3 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 transition-colors active"
-              data-type="refrigerant">
-              <span>❄️</span><span>Refrigerant Piping</span>
+            <button class="type-btn flex items-center gap-2 px-3 py-2 rounded border text-xs transition-colors active"
+              style="border-color:#cc0000; color:#cc0000" data-type="mitsubishi">
+              <span class="w-2 h-2 rounded-full" style="background:#cc0000"></span><span>Mitsubishi</span>
             </button>
             <button
               class="type-btn flex items-center gap-2 px-3 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 transition-colors"
-              data-type="electrical">
-              <span>⚡</span><span>Electrical Wiring</span>
+              data-type="panasonic">
+              <span class="w-2 h-2 rounded-full" style="background:#0068b7"></span><span>Panasonic</span>
             </button>
             <button
               class="type-btn flex items-center gap-2 px-3 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 transition-colors"
-              data-type="wiring">
-              <span>🔌</span><span>Wiring Output</span>
+              data-type="daikin">
+              <span class="w-2 h-2 rounded-full" style="background:#00838f"></span><span>Daikin</span>
             </button>
           </div>
         </section>
@@ -167,6 +166,13 @@
                 <span class="text-xs font-medium dark:text-gray-300 text-gray-600 font-mono" id="numUnitsVal">6</span>
               </div>
               <input type="range" id="numUnits" min="1" max="16" value="6" class="w-full" />
+            </div>
+            <div>
+              <div class="flex justify-between mb-1">
+                <label for="numOutdoor" class="text-xs dark:text-gray-400 text-gray-500">Outdoor Units</label>
+                <span class="text-xs font-medium dark:text-gray-300 text-gray-600 font-mono" id="numOutdoorVal">1</span>
+              </div>
+              <input type="range" id="numOutdoor" min="1" max="4" value="1" class="w-full" />
             </div>
             <div>
               <div class="flex justify-between mb-1">
@@ -188,15 +194,7 @@
                 <option value="commercial">Commercial</option>
               </select>
             </div>
-            <div>
-              <label for="layoutSelect" class="text-xs dark:text-gray-400 text-gray-500 block mb-1">Layout</label>
-              <select id="layoutSelect"
-                class="w-full px-2.5 py-1.5 rounded border dark:border-gray-700 border-gray-200 dark:bg-gray-800 bg-white text-xs dark:text-gray-300 text-gray-600 outline-none focus:border-brand-500">
-                <option value="horizontal-tree">Horizontal Tree</option>
-                <option value="vertical-tree">Vertical Tree</option>
-                <option value="compact-grid">Compact Grid</option>
-              </select>
-            </div>
+
             <div>
               <label for="diagramColorTheme" class="text-xs dark:text-gray-400 text-gray-500 block mb-1">Color
                 Theme</label>
@@ -207,13 +205,7 @@
                 <option value="engineering">Engineering (Grid)</option>
               </select>
             </div>
-            <div id="wiringOutputsRow">
-              <div class="flex justify-between mb-1">
-                <label for="numOutputs" class="text-xs dark:text-gray-400 text-gray-500">Wiring Outputs</label>
-                <span class="text-xs font-medium dark:text-gray-300 text-gray-600 font-mono" id="numOutputsVal">1</span>
-              </div>
-              <input type="range" id="numOutputs" min="1" max="4" value="1" class="w-full" />
-            </div>
+
           </div>
         </section>
 
@@ -221,11 +213,11 @@
         <section class="space-y-1.5">
           <button id="btnGenerate"
             class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition-colors">
-            🎲 Generate Random
+            Generate Random
           </button>
           <button id="btnRenderJson"
             class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 dark:hover:border-gray-600 hover:border-gray-300 transition-colors">
-            📄 Render from JSON
+            Render from JSON
           </button>
         </section>
 
@@ -253,11 +245,11 @@
           <div class="flex gap-1.5">
             <button id="btnExportSvg"
               class="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 dark:hover:border-gray-600 hover:border-gray-300 transition-colors">
-              📐 SVG
+              SVG
             </button>
             <button id="btnExportPng"
               class="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded border dark:border-gray-700 border-gray-200 text-xs dark:text-gray-400 text-gray-500 dark:hover:border-gray-600 hover:border-gray-300 transition-colors">
-              🖼️ PNG
+              PNG
             </button>
           </div>
         </section>
@@ -294,10 +286,10 @@
       <div id="diagramContainer"
         class="w-full h-full overflow-auto flex items-center justify-center cursor-grab active:cursor-grabbing">
         <div id="placeholder" class="text-center px-8">
-          <div class="text-4xl mb-3">📊</div>
           <h2 class="text-base font-semibold dark:text-gray-300 text-gray-600 mb-1">HVAC Diagram Generator</h2>
           <p class="text-xs dark:text-gray-500 text-gray-400 max-w-xs">Pick a preset or configure parameters, then click
-            <strong class="dark:text-gray-300 text-gray-600">Generate Random</strong></p>
+            <strong class="dark:text-gray-300 text-gray-600">Generate Random</strong>
+          </p>
         </div>
       </div>
 

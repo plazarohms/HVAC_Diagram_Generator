@@ -4,14 +4,13 @@
    fullscreen, generation counter, zoom/pan, export
 ------------------------------------------------------- */
 import { generateSystem } from './generator.js';
-import { renderRefrigerantDiagram } from './renderers/refrigerantDiagram.js';
-import { renderElectricalDiagram } from './renderers/electricalDiagram.js';
-import { renderWiringDiagram } from './renderers/wiringDiagram.js';
+import { renderMitsubishiDiagram } from './renderers/mitsubishiDiagram.js';
+import { renderPanasonicDiagram } from './renderers/panasonicDiagram.js';
+import { renderDaikinDiagram } from './renderers/daikinDiagram.js';
 
 // ---- State ----
 let currentConfig = null;
-let currentDiagramType = 'refrigerant';
-let currentLayout = 'horizontal-tree';
+let currentDiagramType = 'mitsubishi';
 let currentColorTheme = 'classic';
 let zoomScale = 1;
 let generationCount = 0;
@@ -31,14 +30,13 @@ const placeholder = document.getElementById('placeholder');
 const jsonEditor = document.getElementById('jsonEditor');
 const numUnitsSlider = document.getElementById('numUnits');
 const numUnitsVal = document.getElementById('numUnitsVal');
+const numOutdoorSlider = document.getElementById('numOutdoor');
+const numOutdoorVal = document.getElementById('numOutdoorVal');
 const capSlider = document.getElementById('systemCapacity');
 const capVal = document.getElementById('systemCapacityVal');
 const buildingSelect = document.getElementById('buildingType');
-const layoutSelect = document.getElementById('layoutSelect');
+// layoutSelect removed — layout is determined by manufacturer
 const colorThemeSelect = document.getElementById('diagramColorTheme');
-const numOutputsSlider = document.getElementById('numOutputs');
-const numOutputsVal = document.getElementById('numOutputsVal');
-const wiringRow = document.getElementById('wiringOutputsRow');
 const zoomLevelEl = document.getElementById('zoomLevel');
 const statsBar = document.getElementById('statsBar');
 const genCounterEl = document.getElementById('genCounter');
@@ -79,31 +77,26 @@ btnFullscreen.addEventListener('click', () => {
 });
 
 
-// ========== DIAGRAM TYPE SELECTION ==========
+// ========== MANUFACTURER SELECTION ==========
+const BRAND_COLORS = { mitsubishi: '#cc0000', panasonic: '#0068b7', daikin: '#00838f' };
 typeButtons.forEach(btn => {
     btn.addEventListener('click', () => {
         typeButtons.forEach(b => {
             b.classList.remove('active');
-            b.classList.remove('border-brand-500', 'dark:border-brand-500', 'dark:bg-brand-500/10', 'bg-brand-50', 'dark:text-brand-300', 'text-brand-600');
+            b.style.borderColor = '';
+            b.style.color = '';
         });
-        btn.classList.add('active', 'border-brand-500', 'dark:border-brand-500', 'dark:bg-brand-500/10', 'bg-brand-50', 'dark:text-brand-300', 'text-brand-600');
+        btn.classList.add('active');
+        var color = BRAND_COLORS[btn.dataset.type] || '#4f46e5';
+        btn.style.borderColor = color;
+        btn.style.color = color;
         currentDiagramType = btn.dataset.type;
-        wiringRow.style.display = currentDiagramType === 'wiring' ? 'block' : 'none';
         if (currentConfig) renderDiagram();
     });
 });
-// Activate first button
-const firstTypeBtn = document.querySelector('.type-btn[data-type="refrigerant"]');
-if (firstTypeBtn) {
-    firstTypeBtn.classList.add('border-brand-500', 'dark:border-brand-500', 'dark:bg-brand-500/10', 'bg-brand-50', 'dark:text-brand-300', 'text-brand-600');
-}
 
 
-// ========== LAYOUT & COLOR THEME ==========
-layoutSelect.addEventListener('change', () => {
-    currentLayout = layoutSelect.value;
-    if (currentConfig) renderDiagram();
-});
+// ========== COLOR THEME ==========
 
 colorThemeSelect.addEventListener('change', () => {
     currentColorTheme = colorThemeSelect.value;
@@ -113,8 +106,8 @@ colorThemeSelect.addEventListener('change', () => {
 
 // ========== SLIDERS ==========
 numUnitsSlider.addEventListener('input', () => { numUnitsVal.textContent = numUnitsSlider.value; });
+numOutdoorSlider.addEventListener('input', () => { numOutdoorVal.textContent = numOutdoorSlider.value; });
 capSlider.addEventListener('input', () => { capVal.textContent = capSlider.value; });
-numOutputsSlider.addEventListener('input', () => { numOutputsVal.textContent = numOutputsSlider.value; });
 
 
 // ========== QUICK PRESETS ==========
@@ -142,16 +135,16 @@ btnGenerate.addEventListener('click', doGenerate);
 function doGenerate() {
     const opts = {
         numUnits: parseInt(numUnitsSlider.value),
+        numOutdoor: parseInt(numOutdoorSlider.value),
         systemCapacity: parseInt(capSlider.value),
         buildingType: buildingSelect.value,
-        numOutputs: parseInt(numOutputsSlider.value),
     };
     currentConfig = generateSystem(opts);
     jsonEditor.value = JSON.stringify(currentConfig, null, 2);
     generationCount++;
     genCounterEl.textContent = generationCount;
     genBadge.style.opacity = '1';
-    diagramHistory.push({ config: JSON.parse(JSON.stringify(currentConfig)), type: currentDiagramType, layout: currentLayout });
+    diagramHistory.push({ config: JSON.parse(JSON.stringify(currentConfig)), type: currentDiagramType });
     renderDiagram();
     toast('Diagram generated!', 'success');
 }
@@ -180,14 +173,14 @@ function renderDiagram() {
     let svg;
     try {
         switch (currentDiagramType) {
-            case 'refrigerant':
-                svg = renderRefrigerantDiagram(currentConfig, currentLayout);
+            case 'mitsubishi':
+                svg = renderMitsubishiDiagram(currentConfig);
                 break;
-            case 'electrical':
-                svg = renderElectricalDiagram(currentConfig, currentLayout);
+            case 'panasonic':
+                svg = renderPanasonicDiagram(currentConfig);
                 break;
-            case 'wiring':
-                svg = renderWiringDiagram(currentConfig, currentLayout);
+            case 'daikin':
+                svg = renderDaikinDiagram(currentConfig);
                 break;
         }
     } catch (err) {
@@ -430,4 +423,4 @@ function downloadBlob(blob, filename) {
 
 
 // ========== INIT ==========
-wiringRow.style.display = 'none';
+// wiringRow.style.display = 'none';
